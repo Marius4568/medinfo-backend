@@ -16,6 +16,12 @@ router.post('/add_patient', isLoggedIn, validation(patientShemas, 'addPatientSch
   try {
     const con = await mysql.createConnection(mySQLconfig);
 
+    const [relationshiop] = await con.execute(`
+    SELECT * FROM doctor_patient
+    WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} 
+    AND patient_id = ${mysql.escape(req.body.patient_id)}
+    `);
+
     const [duplicateAccounts] = await con.execute(`
 SELECT * FROM patient
 WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(req.body.identity_code)}
@@ -131,21 +137,28 @@ WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = ${0}
 
 router.get('/get_patient', async (req, res) => {
   try {
+    req.body.patient_id = req.query.patient_id;
     const con = await mysql.createConnection(mySQLconfig);
 
     const [data] = await con.execute(`
     SELECT first_name, last_name, birth_date, gender,
-     email, photo, patient_id
-     FROM patient
-    JOIN doctor_patient
-     ON doctor_patient.patient_id = patient.id
-WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = ${0}
+    email, photo
+    FROM patient
+    WHERE id = ${mysql.escape(req.body.patient_id)} AND archived = ${0}
 `);
-    res.send({ patients: data });
+
+    if (data.length !== 1) {
+      await con.end();
+      return res.status(500).send({ msg: `Sorry couldn't retrieve such user.` });
+    }
+    await con.end();
+    return res.send({ patients: data });
   } catch (err) {
     console.log(err);
     return res.status(500).send({ msg: 'Server error. Try again later.' });
   }
 });
+
+router.delete
 
 module.exports = router;

@@ -26,7 +26,7 @@ router.post('/register', validation(authShemas, 'registerSchema'), async (req, r
 
     if (email.length >= 1) {
       await con.end();
-      return res.status(400).send({ msg: 'User already exists' });
+      return res.status(400).send({ msg: 'User already exists.' });
     }
 
     const [data] = await con.execute(`
