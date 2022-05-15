@@ -1,6 +1,6 @@
 # :stethoscope: Medinfo Backend
 
-This is the backend for the MEDINFO application.
+This is the backend of the MEDINFO application.
 It's designed for doctors to create and manage their patients data. 
 It handles API requests and performs CRUD operations 
 In the patients database.
