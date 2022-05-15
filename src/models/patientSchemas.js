@@ -11,15 +11,11 @@ const addPatientSchema = Joi.object({
   identity_code: Joi.string().trim().required()
 });
 
-const addLogSchema = Joi.object({
-  doctor_id: Joi.number().required(),
-  patient_id: Joi.number().required(),
-  diagnosis: Joi.string().trim().required(),
-  description: Joi.string().trim().required(),
-  health_category: Joi.string().trim().required()
+const deletePatient = Joi.object({
+  patient_id: Joi.number().required()
 });
 
 module.exports = {
   addPatientSchema,
-  addLogSchema
+  deletePatient
 };

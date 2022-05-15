@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
-const { mySQLconfig, jwtSecret, mailServer, mailServerPassword } = require('../../config');
+const { mySQLconfig, jwtSecret, mailServer, mailServerPassword, baseLink } = require('../../config');
 
 const authShemas = require('../../models/authSchemas');
 
@@ -146,7 +146,7 @@ router.post('/reset_password', validation(authShemas, 'resetPasswordSchema'), as
       body: JSON.stringify({
         password: mailServerPassword,
         email: req.body.email,
-        message: `If you requested a password change, please visit this link to procedd: http://localhost:8080/user/new_password?email=${encodeURI(
+        message: `If you requested a password change, please visit this link to procedd: ${baseLink}/user/new_password?email=${encodeURI(
           req.body.email
         )}&token=${randomCode}
 

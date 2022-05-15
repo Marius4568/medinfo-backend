@@ -1,9 +1,8 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
-const fetch = require('node-fetch');
-const { mySQLconfig, jwtSecret, mailServer, mailServerPassword } = require('../../config');
+
+const { mySQLconfig, jwtSecret } = require('../../config');
 
 const patientShemas = require('../../models/patientSchemas');
 
@@ -12,24 +11,42 @@ const validation = require('../../middleware/dataValidation');
 
 const router = express.Router();
 
-router.post('/add_patient', isLoggedIn, validation(patientShemas, 'addPatientSchema'), async (req, res) => {
+router.post('/add', isLoggedIn, validation(patientShemas, 'addPatientSchema'), async (req, res) => {
   try {
+    req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
+
     const con = await mysql.createConnection(mySQLconfig);
+    // Check if the relationship between the doctor and patient already exists if it does not create the relationship
 
-    const [relationshiop] = await con.execute(`
-    SELECT * FROM doctor_patient
-    WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} 
-    AND patient_id = ${mysql.escape(req.body.patient_id)}
-    `);
-
-    const [duplicateAccounts] = await con.execute(`
+    const [duplicateAccount] = await con.execute(`
 SELECT * FROM patient
 WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(req.body.identity_code)}
 `);
 
-    if (duplicateAccounts.length !== 0) {
+    if (duplicateAccount.length !== 0) {
+      const [relationship] = await con.execute(`
+      SELECT * FROM doctor_patient
+      WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} 
+      AND patient_id = ${mysql.escape(duplicateAccount[0].id)}
+      `);
+
+      if (relationship.length > 0) {
+        await con.end();
+        return res.status(400).send({ msg: 'This patient is already assigned to you.' });
+      }
+
+      const [response] = await con.execute(`
+      INSERT INTO doctor_patient (doctor_id, patient_id)
+      VALUES(${mysql.escape(req.body.doctor.id)}, ${mysql.escape(duplicateAccount[0].id)})
+      `);
+
       await con.end();
-      return res.status(400).send({ msg: 'Patient already exists' });
+
+      if (!response.affectedRows) {
+        return res.status(500).send({ msg: 'Server error. Try again later.' });
+      }
+
+      return res.send({ msg: 'This patient already exists. We assigned the pattient to you :)' });
     }
 
     const [data] = await con.execute(`
@@ -54,66 +71,7 @@ WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(
   }
 });
 
-router.post('/add_log', isLoggedIn, validation(patientShemas, 'addLogSchema'), async (req, res) => {
-  try {
-    // Get the info of the doctor, who is logged in
-    req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
-
-    const con = await mysql.createConnection(mySQLconfig);
-
-    // Handling the case if there's no such user in the DB
-    const [patientId] = await con.execute(`
-      SELECT id FROM patient
-      WHERE id = ${mysql.escape(req.body.patient_id)}
-      `);
-
-    if (patientId.length !== 1) {
-      await con.end();
-      return res.status(400).send({ msg: 'No such patient in the system' });
-    }
-
-    // Insert the log into the DB
-    const [data] = await con.execute(`
-      INSERT INTO medical_logs (doctor_id, patient_id, diagnosis, description, health_category)
-  
-      VALUES (${mysql.escape(req.body.doctor.id)}, ${mysql.escape(req.body.patient_id)}, ${mysql.escape(
-      req.body.diagnosis
-    )}, ${mysql.escape(req.body.description)}, ${mysql.escape(req.body.health_category)})
-      `);
-
-    if (!data.affectedRows) {
-      return res.status(500).send({ msg: 'Server error. Try again later.' });
-    }
-
-    // If we don't have this patient-doctor relationship add it to the DB
-    const [relationshiop] = await con.execute(`
-    SELECT * FROM doctor_patient
-    WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} 
-    AND patient_id = ${mysql.escape(req.body.patient_id)}
-    `);
-
-    if (relationshiop.length === 0) {
-      const [data1] = await con.execute(`
-        INSERT INTO doctor_patient (doctor_id, patient_id)
-  
-        VALUES (${mysql.escape(req.body.doctor.id)}, ${mysql.escape(req.body.patient_id)})
-        `);
-
-      if (!data1.affectedRows) {
-        await con.end();
-        return res.status(500).send({ msg: 'Server error. Something went wrong' });
-      }
-    }
-
-    await con.end();
-    return res.send({ msg: 'Log added' });
-  } catch (err) {
-    console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
-  }
-});
-
-router.get('/get_patients', async (req, res) => {
+router.get('/get_patients', isLoggedIn, async (req, res) => {
   try {
     // Get the info of the doctor, who is logged in
     req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
@@ -128,21 +86,21 @@ router.get('/get_patients', async (req, res) => {
      ON doctor_patient.patient_id = patient.id
 WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = ${0}
 `);
-    res.send({ patients: data });
+    return res.send({ patients: data });
   } catch (err) {
     console.log(err);
     return res.status(500).send({ msg: 'Server error. Try again later.' });
   }
 });
 
-router.get('/get_patient', async (req, res) => {
+router.get('/get_patient', isLoggedIn, async (req, res) => {
   try {
     req.body.patient_id = req.query.patient_id;
     const con = await mysql.createConnection(mySQLconfig);
 
     const [data] = await con.execute(`
     SELECT first_name, last_name, birth_date, gender,
-    email, photo
+    email, photo, id
     FROM patient
     WHERE id = ${mysql.escape(req.body.patient_id)} AND archived = ${0}
 `);
@@ -159,6 +117,54 @@ router.get('/get_patient', async (req, res) => {
   }
 });
 
-router.delete
+router.delete('/delete', isLoggedIn, validation(patientShemas, 'deletePatient'), async (req, res) => {
+  try {
+    req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
+
+    const con = await mysql.createConnection(mySQLconfig);
+
+    const [data] = await con.execute(`
+    SELECT * FROM doctor_patient
+    WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${mysql.escape(req.body.patient_id)}
+`);
+
+    if (data.length !== 1) {
+      await con.end();
+      return res.status(400).send({ msg: `This patient is not assigned to you.` });
+    }
+    // Delete patient logs if there are any
+    const [patientLogs] = await con.execute(`
+    SELECT * FROM medical_logs
+    WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${mysql.escape(req.body.patient_id)}
+`);
+
+    if (patientLogs.length > 0) {
+      const [deletedLogs] = await con.execute(`
+  DELETE FROM medical_Logs
+  WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${mysql.escape(req.body.patient_id)}
+`);
+
+      if (!deletedLogs.affectedRows) {
+        await con.end();
+        return res.status(500).send({ msg: `Sorry couldn't delete patient.` });
+      }
+    }
+
+    const [deletedRelationship] = await con.execute(`
+    DELETE FROM doctor_patient
+    WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${mysql.escape(req.body.patient_id)}
+`);
+    await con.end();
+
+    if (!deletedRelationship.affectedRows) {
+      return res.status(500).send({ msg: `Sorry couldn't delete patient.` });
+    }
+
+    return res.send({ msq: 'Patient deleted' });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ msg: 'Server error. Try again later.' });
+  }
+});
 
 module.exports = router;

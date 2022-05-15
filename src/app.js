@@ -12,6 +12,7 @@ app.use(cors());
 // User actions like (login/register/resetPS/changePS)
 app.use('/user', require('./routes/v1/user'));
 app.use('/patient', require('./routes/v1/patients'));
+app.use('/logs', require('./routes/v1/logs'));
 
 // Testing
 app.get('/', (req, res) => {
