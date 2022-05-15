@@ -77,26 +77,51 @@ router.delete('/delete', isLoggedIn, validation(logSchemas, 'deleteLog'), async 
     const con = await mysql.createConnection(mySQLconfig);
 
     const [data] = await con.execute(`
-      SELECT * FROM doctor_patient
-      WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${mysql.escape(req.body.patient_id)}
+      SELECT * FROM medical_logs
+      WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND id = ${mysql.escape(req.body.log_id)}
   `);
 
     if (data.length !== 1) {
       await con.end();
-      return res.status(400).send({ msg: `This patient is not assigned to you.` });
+      return res.status(400).send({ msg: `No such log in database.` });
     }
 
     const [deletion] = await con.execute(`
-      DELETE FROM doctor_patient
-      WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${mysql.escape(req.body.patient_id)}
+      DELETE FROM medical_logs
+      WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND id = ${mysql.escape(req.body.log_id)}
   `);
     await con.end();
 
     if (!deletion.affectedRows) {
-      return res.status(500).send({ msg: `Sorry couldn't delete patient.` });
+      return res.status(500).send({ msg: `Sorry couldn't delete log.` });
     }
 
-    return res.send({ msq: 'Patient deleted' });
+    return res.send({ msq: 'Log deleted' });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ msg: 'Server error. Try again later.' });
+  }
+});
+
+router.get('/get_logs', isLoggedIn, async (req, res) => {
+  try {
+    // Get the info of the doctor, who is logged in
+    req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
+
+    const con = await mysql.createConnection(mySQLconfig);
+
+    const [data] = await con.execute(`
+        SELECT id, diagnosis, description, health_category
+        FROM medical_logs
+        WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${req.body.patient_id}
+  `);
+    await con.end();
+
+    if (data.length === 0) {
+      return res.status(400).send({ msg: `No logs in database` });
+    }
+
+    return res.send({ logs: data });
   } catch (err) {
     console.log(err);
     return res.status(500).send({ msg: 'Server error. Try again later.' });

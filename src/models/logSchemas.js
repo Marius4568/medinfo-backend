@@ -7,6 +7,11 @@ const addLogSchema = Joi.object({
   health_category: Joi.string().trim().required()
 });
 
+const deleteLog = Joi.object({
+  log_id: Joi.number().required()
+});
+
 module.exports = {
-  addLogSchema
+  addLogSchema,
+  deleteLog
 };
