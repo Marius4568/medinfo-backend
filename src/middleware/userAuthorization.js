@@ -9,7 +9,7 @@ module.exports = {
 
       return next();
     } catch (err) {
-      return res.status(400).send({ msg: 'User is not logged in.' });
+      return res.status(400).send({ error: 'User is not logged in.' });
     }
   }
 };

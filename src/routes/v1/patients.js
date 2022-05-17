@@ -32,7 +32,7 @@ WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(
 
       if (relationship.length > 0) {
         await con.end();
-        return res.status(400).send({ msg: 'This patient is already assigned to you.' });
+        return res.status(400).send({ error: 'This patient is already assigned to you.' });
       }
 
       const [response] = await con.execute(`
@@ -43,7 +43,7 @@ WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(
       await con.end();
 
       if (!response.affectedRows) {
-        return res.status(500).send({ msg: 'Server error. Try again later.' });
+        return res.status(500).send({ error: 'Server error. Try again later.' });
       }
 
       return res.send({ msg: 'This patient already exists. We assigned the pattient to you :)' });
@@ -61,13 +61,13 @@ WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(
     await con.end();
 
     if (!data.affectedRows) {
-      return res.status(500).send({ msg: 'Server error. Try again later.' });
+      return res.status(500).send({ error: 'Server error. Try again later.' });
     }
 
     return res.send({ msg: 'Patient added' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
+    return res.status(500).send({ error: 'Server error. Try again later.' });
   }
 });
 
@@ -89,7 +89,7 @@ WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = ${0}
     return res.send({ patients: data });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
+    return res.status(500).send({ error: 'Server error. Try again later.' });
   }
 });
 
@@ -107,13 +107,13 @@ router.get('/get_patient', isLoggedIn, async (req, res) => {
 
     if (data.length !== 1) {
       await con.end();
-      return res.status(500).send({ msg: `Sorry couldn't retrieve such user.` });
+      return res.status(500).send({ error: `Sorry couldn't retrieve such user.` });
     }
     await con.end();
     return res.send({ patients: data });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
+    return res.status(500).send({ error: 'Server error. Try again later.' });
   }
 });
 
@@ -130,7 +130,7 @@ router.delete('/delete', isLoggedIn, validation(patientShemas, 'deletePatient'),
 
     if (data.length !== 1) {
       await con.end();
-      return res.status(400).send({ msg: `This patient is not assigned to you.` });
+      return res.status(400).send({ error: `This patient is not assigned to you.` });
     }
     // Delete patient logs if there are any
     const [patientLogs] = await con.execute(`
@@ -146,7 +146,7 @@ router.delete('/delete', isLoggedIn, validation(patientShemas, 'deletePatient'),
 
       if (!deletedLogs.affectedRows) {
         await con.end();
-        return res.status(500).send({ msg: `Sorry couldn't delete patient.` });
+        return res.status(500).send({ error: `Sorry couldn't delete patient.` });
       }
     }
 
@@ -157,13 +157,13 @@ router.delete('/delete', isLoggedIn, validation(patientShemas, 'deletePatient'),
     await con.end();
 
     if (!deletedRelationship.affectedRows) {
-      return res.status(500).send({ msg: `Sorry couldn't delete patient.` });
+      return res.status(500).send({ error: `Sorry couldn't delete patient.` });
     }
 
     return res.send({ msq: 'Patient deleted' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
+    return res.status(500).send({ error: 'Server error. Try again later.' });
   }
 });
 

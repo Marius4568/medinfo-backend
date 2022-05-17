@@ -26,7 +26,7 @@ router.post('/register', validation(authShemas, 'registerSchema'), async (req, r
 
     if (email.length >= 1) {
       await con.end();
-      return res.status(400).send({ msg: 'User already exists.' });
+      return res.status(400).send({ error: 'User already exists.' });
     }
 
     const [data] = await con.execute(`
@@ -36,13 +36,13 @@ router.post('/register', validation(authShemas, 'registerSchema'), async (req, r
     await con.end();
 
     if (!data.insertId) {
-      return res.status(500).send({ msg: 'Something wrong with the server. Please try again later' });
+      return res.status(500).send({ error: 'Something wrong with the server. Please try again later' });
     }
 
     return res.send({ msg: 'User created' });
   } catch (err) {
     console.log(err.message);
-    return res.status(500).send({ msg: 'Server error. Please try again' });
+    return res.status(500).send({ error: 'Server error. Please try again' });
   }
 });
 
@@ -58,7 +58,7 @@ router.post('/login', validation(authShemas, 'loginSchema'), async (req, res) =>
     await con.end();
 
     if (data.length !== 1) {
-      return res.status(400).send({ msg: 'incorrect email or password' });
+      return res.status(400).send({ error: 'incorrect email or password' });
     }
 
     const isAuthed = await bcrypt.compareSync(req.body.password, data[0].password);
@@ -71,7 +71,7 @@ router.post('/login', validation(authShemas, 'loginSchema'), async (req, res) =>
     return res.send({ msg: 'incorrect email or password' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Something went wrong' });
+    return res.status(500).send({ error: 'Something went wrong' });
   }
 });
 
@@ -94,7 +94,7 @@ router.post('/change_password', isLoggedIn, validation(authShemas, 'changePasswo
             `);
       if (!dbRes.affectedRows) {
         await con.end();
-        return res.status(500).send({ msg: 'Something went wrong try again later' });
+        return res.status(500).send({ error: 'Something went wrong try again later' });
       }
 
       await con.end();
@@ -103,10 +103,10 @@ router.post('/change_password', isLoggedIn, validation(authShemas, 'changePasswo
 
     await con.end();
 
-    return res.status(400).send({ msg: 'Incorrect old password' });
+    return res.status(400).send({ error: 'Incorrect old password' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error try again later' });
+    return res.status(500).send({ error: 'Server error try again later' });
   }
 });
 
@@ -137,7 +137,7 @@ router.post('/reset_password', validation(authShemas, 'resetPasswordSchema'), as
     await con.end();
 
     if (!data2.insertId) {
-      return res.status(500).send({ msg: 'Something is wrong with the server. Please try again.' });
+      return res.status(500).send({ error: 'Something is wrong with the server. Please try again.' });
     }
 
     const response = await fetch(mailServer, {
@@ -158,13 +158,13 @@ router.post('/reset_password', validation(authShemas, 'resetPasswordSchema'), as
     const json = await response.json();
 
     if (!json.info) {
-      return res.status(500).send({ msg: 'Something is wrong with the server. Please try again.' });
+      return res.status(500).send({ error: 'Something is wrong with the server. Please try again.' });
     }
 
     return res.send({ msg: 'If user exists, you will shortly receive a password reset email' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error try again later' });
+    return res.status(500).send({ error: 'Server error try again later' });
   }
 });
 
@@ -180,13 +180,13 @@ router.post('/new_password', validation(authShemas, 'makeNewPasswordSchema'), as
 
     if (data.length !== 1) {
       await con.end();
-      return res.status(500).send({ msg: 'Server error try again later' });
+      return res.status(500).send({ error: 'Server error try again later' });
     }
 
     // 180 because for some reason database returns timestamp -3h
     if ((new Date().getTime() - new Date(data[0].created_at).getTime()) / 60000 - 180 > 15) {
       await con.end();
-      return res.status(400).send({ msg: 'Link no longer valid' });
+      return res.status(400).send({ error: 'Link no longer valid' });
     }
 
     const hashedPassword = bcrypt.hashSync(req.body.password, 10);
@@ -200,7 +200,7 @@ router.post('/new_password', validation(authShemas, 'makeNewPasswordSchema'), as
 
     if (!response.affectedRows) {
       await con.end();
-      return res.status(500).send({ msg: 'Server error try again later1' });
+      return res.status(500).send({ error: 'Server error try again later1' });
     }
 
     await con.execute(`
@@ -212,7 +212,7 @@ router.post('/new_password', validation(authShemas, 'makeNewPasswordSchema'), as
     return res.send({ msg: 'Password changed' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error try again later2' });
+    return res.status(500).send({ error: 'Server error try again later2' });
   }
 });
 

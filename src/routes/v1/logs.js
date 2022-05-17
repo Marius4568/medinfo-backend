@@ -26,7 +26,7 @@ router.post('/add', isLoggedIn, validation(logSchemas, 'addLogSchema'), async (r
 
     if (patientId.length !== 1) {
       await con.end();
-      return res.status(400).send({ msg: 'No such patient in the system' });
+      return res.status(400).send({ error: 'No such patient in the system' });
     }
 
     // Insert the log into the DB
@@ -39,7 +39,7 @@ router.post('/add', isLoggedIn, validation(logSchemas, 'addLogSchema'), async (r
         `);
 
     if (!data.affectedRows) {
-      return res.status(500).send({ msg: 'Server error. Try again later.' });
+      return res.status(500).send({ error: 'Server error. Try again later.' });
     }
 
     // If we don't have this patient-doctor relationship add it to the DB
@@ -58,7 +58,7 @@ router.post('/add', isLoggedIn, validation(logSchemas, 'addLogSchema'), async (r
 
       if (!data1.affectedRows) {
         await con.end();
-        return res.status(500).send({ msg: 'Server error. Something went wrong' });
+        return res.status(500).send({ error: 'Server error. Something went wrong' });
       }
     }
 
@@ -66,7 +66,7 @@ router.post('/add', isLoggedIn, validation(logSchemas, 'addLogSchema'), async (r
     return res.send({ msg: 'Log added' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
+    return res.status(500).send({ error: 'Server error. Try again later.' });
   }
 });
 
@@ -83,7 +83,7 @@ router.delete('/delete', isLoggedIn, validation(logSchemas, 'deleteLog'), async 
 
     if (data.length !== 1) {
       await con.end();
-      return res.status(400).send({ msg: `No such log in database.` });
+      return res.status(400).send({ error: `No such log in database.` });
     }
 
     const [deletion] = await con.execute(`
@@ -93,13 +93,13 @@ router.delete('/delete', isLoggedIn, validation(logSchemas, 'deleteLog'), async 
     await con.end();
 
     if (!deletion.affectedRows) {
-      return res.status(500).send({ msg: `Sorry couldn't delete log.` });
+      return res.status(500).send({ error: `Sorry couldn't delete log.` });
     }
 
     return res.send({ msq: 'Log deleted' });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
+    return res.status(500).send({ error: 'Server error. Try again later.' });
   }
 });
 
@@ -118,13 +118,13 @@ router.get('/get_logs', isLoggedIn, async (req, res) => {
     await con.end();
 
     if (data.length === 0) {
-      return res.status(400).send({ msg: `No logs in database` });
+      return res.status(400).send({ error: `No logs in database` });
     }
 
     return res.send({ logs: data });
   } catch (err) {
     console.log(err);
-    return res.status(500).send({ msg: 'Server error. Try again later.' });
+    return res.status(500).send({ error: 'Server error. Try again later.' });
   }
 });
 
