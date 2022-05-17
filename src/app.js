@@ -19,6 +19,6 @@ app.get('/', (req, res) => {
   res.send('ok');
 });
 
-app.all('*', (req, res) => res.status(404).send({ msg: 'Page not found' }));
+app.all('*', (req, res) => res.status(404).send({ error: 'Page not found' }));
 
 app.listen(serverPort, () => console.log(`Server is running on port ${serverPort}`));

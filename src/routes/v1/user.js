@@ -68,7 +68,7 @@ router.post('/login', validation(authShemas, 'loginSchema'), async (req, res) =>
       return res.send({ msg: 'Successfully logged in', token });
     }
 
-    return res.send({ msg: 'incorrect email or password' });
+    return res.send({ error: 'incorrect email or password' });
   } catch (err) {
     console.log(err);
     return res.status(500).send({ error: 'Something went wrong' });
