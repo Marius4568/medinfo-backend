@@ -58,12 +58,27 @@ WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(
       req.body.email
     )},${mysql.escape(req.body.photo)}, ${mysql.escape(req.body.identity_code)})
     `);
-    await con.end();
 
     if (!data.affectedRows) {
       return res.status(500).send({ error: 'Server error. Try again later.' });
     }
 
+    const [insertedPatient] = await con.execute(`
+    SELECT id FROM patient
+    WHERE email = ${mysql.escape(req.body.email)} OR identity_code = ${mysql.escape(req.body.identity_code)}
+    `);
+
+    if (insertedPatient.length === 1) {
+      const [addRelationship] = await con.execute(`
+    INSERT INTO doctor_patient (doctor_id, patient_id)
+    VALUES(${mysql.escape(req.body.doctor.id)}, ${mysql.escape(insertedPatient[0].id)})
+    `);
+      if (!addRelationship.affectedRows) {
+        return res.send({ msg: 'Server error. Try again later.' });
+      }
+    }
+
+    await con.end();
     return res.send({ msg: 'Patient added' });
   } catch (err) {
     console.log(err);
@@ -110,7 +125,7 @@ router.get('/get_patient', isLoggedIn, async (req, res) => {
       return res.status(500).send({ error: `Sorry couldn't retrieve such user.` });
     }
     await con.end();
-    return res.send({ patients: data });
+    return res.send({ patient: data });
   } catch (err) {
     console.log(err);
     return res.status(500).send({ error: 'Server error. Try again later.' });
