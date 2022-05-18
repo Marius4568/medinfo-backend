@@ -1,4 +1,4 @@
-# :stethoscope: Medinfo Backend
+# :stethoscope: Medinfo app Backend
 
 This is the backend of the MEDINFO application.
 It's designed for doctors to create and manage their patients data. 
