@@ -101,6 +101,7 @@ router.get('/get_patients', isLoggedIn, async (req, res) => {
      ON doctor_patient.patient_id = patient.id
 WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = ${0}
 `);
+    await con.end();
     return res.send({ patients: data });
   } catch (err) {
     console.log(err);
