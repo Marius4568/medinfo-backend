@@ -7,7 +7,7 @@ const addPatientSchema = Joi.object({
   gender: Joi.string().trim().required(),
   phone_number: Joi.string().trim().lowercase().required(),
   email: Joi.string().email().trim().lowercase().required(),
-  photo: Joi.string(),
+  photo: Joi.string().allow(null, ''),
   identity_code: Joi.string().trim().required()
 });
 
