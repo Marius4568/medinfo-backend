@@ -186,6 +186,7 @@ router.delete('/delete', isLoggedIn, validation(patientShemas, 'deletePatient'),
 router.get('/search', isLoggedIn, async (req, res) => {
   try {
     req.body.patient_search = req.query.patient_search;
+    console.log(req.query.patient_search);
     // Get the info of the doctor, who is logged in
     req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
 
@@ -199,6 +200,7 @@ router.get('/search', isLoggedIn, async (req, res) => {
       ON doctor_patient.patient_id = patient.id
  WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = 0) AS search_result
  WHERE last_name LIKE "${req.body.patient_search}%" OR first_name LIKE "${req.body.patient_search}%"
+ OR concat(first_name, " ", last_name) LIKE "${req.body.patient_search}%"
 `);
     console.log(data, req.body.patient_search, req.body.doctor);
     await con.end();
