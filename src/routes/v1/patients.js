@@ -183,4 +183,28 @@ router.delete('/delete', isLoggedIn, validation(patientShemas, 'deletePatient'),
   }
 });
 
+router.get('/search', isLoggedIn, validation(patientShemas, 'searchPatient'), async (req, res) => {
+  try {
+    // Get the info of the doctor, who is logged in
+    req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
+
+    const con = await mysql.createConnection(mySQLconfig);
+
+    const [data] = await con.execute(`
+    SELECT * FROM(SELECT first_name, last_name, birth_date, gender,
+      email, photo, patient_id
+      FROM patient
+     JOIN doctor_patient
+      ON doctor_patient.patient_id = 130
+ WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = 0) AS search_result
+ WHERE last_name LIKE "${req.body.search_patient}%" OR first_name LIKE "${req.body.search_patient}%"
+`);
+    await con.end();
+    return res.send({ patients: data });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({ error: 'Server error. Try again later.' });
+  }
+});
+
 module.exports = router;
