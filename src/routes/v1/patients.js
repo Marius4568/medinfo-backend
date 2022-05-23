@@ -183,8 +183,9 @@ router.delete('/delete', isLoggedIn, validation(patientShemas, 'deletePatient'),
   }
 });
 
-router.get('/search', isLoggedIn, validation(patientShemas, 'searchPatient'), async (req, res) => {
+router.get('/search', isLoggedIn, async (req, res) => {
   try {
+    req.body.patient_search = req.query.patient_search;
     // Get the info of the doctor, who is logged in
     req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
 
@@ -197,7 +198,7 @@ router.get('/search', isLoggedIn, validation(patientShemas, 'searchPatient'), as
      JOIN doctor_patient
       ON doctor_patient.patient_id = 130
  WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = 0) AS search_result
- WHERE last_name LIKE "${req.body.search_patient}%" OR first_name LIKE "${req.body.search_patient}%"
+ WHERE last_name LIKE "${req.body.patient_search}%" OR first_name LIKE "${req.body.patient_search}%"
 `);
     await con.end();
     return res.send({ patients: data });

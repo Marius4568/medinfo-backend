@@ -15,12 +15,7 @@ const deletePatient = Joi.object({
   patient_id: Joi.number().required()
 });
 
-const searchPatient = Joi.object({
-  search_patient: Joi.string().required()
-});
-
 module.exports = {
   addPatientSchema,
-  deletePatient,
-  searchPatient
+  deletePatient
 };
