@@ -196,10 +196,11 @@ router.get('/search', isLoggedIn, async (req, res) => {
       email, photo, patient_id
       FROM patient
      JOIN doctor_patient
-      ON doctor_patient.patient_id = 130
+      ON doctor_patient.patient_id = patient.id
  WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND archived = 0) AS search_result
  WHERE last_name LIKE "${req.body.patient_search}%" OR first_name LIKE "${req.body.patient_search}%"
 `);
+    console.log(data, req.body.patient_search, req.body.doctor);
     await con.end();
     return res.send({ patients: data });
   } catch (err) {
