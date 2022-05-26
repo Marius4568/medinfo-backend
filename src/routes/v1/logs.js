@@ -7,7 +7,7 @@ const { mySQLconfig, jwtSecret } = require('../../config');
 const logSchemas = require('../../models/logSchemas');
 
 const { isLoggedIn } = require('../../middleware/userAuthorization');
-const validation = require('../../middleware/dataValidation');
+const validation = require('../../middleware/validation');
 
 const router = express.Router();
 

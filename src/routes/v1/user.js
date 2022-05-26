@@ -8,7 +8,7 @@ const { mySQLconfig, jwtSecret, mailServer, mailServerPassword, baseLink } = req
 const authShemas = require('../../models/authSchemas');
 
 const { isLoggedIn } = require('../../middleware/userAuthorization');
-const validation = require('../../middleware/dataValidation');
+const validation = require('../../middleware/validation');
 
 const router = express.Router();
 

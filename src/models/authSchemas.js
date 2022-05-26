@@ -12,7 +12,7 @@ const loginSchema = Joi.object({
 });
 
 const changePasswordSchema = Joi.object({
-  oldPassword: Joi.string().lowercase().required(),
+  oldPassword: Joi.string().required(),
   newPassword: Joi.string().required()
 });
 
