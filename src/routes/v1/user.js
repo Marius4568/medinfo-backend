@@ -103,7 +103,7 @@ router.post('/change_password', isLoggedIn, validation(authShemas, 'changePasswo
 
     await con.end();
 
-    return res.status(400).send({ error: 'Incorrect old password' });
+    return res.status(400).send({ error: 'Incorrect old password.' });
   } catch (err) {
     console.log(err);
     return res.status(500).send({ error: 'Server error try again later' });
