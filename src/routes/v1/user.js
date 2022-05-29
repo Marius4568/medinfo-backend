@@ -98,7 +98,7 @@ router.post('/change_password', isLoggedIn, validation(authShemas, 'changePasswo
       }
 
       await con.end();
-      return res.send({ msg: 'Password changed' });
+      return res.send({ msg: 'Password changed.' });
     }
 
     await con.end();
