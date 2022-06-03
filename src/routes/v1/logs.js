@@ -112,7 +112,7 @@ router.get('/get_logs', isLoggedIn, async (req, res) => {
     const con = await mysql.createConnection(mySQLconfig);
 
     const [data] = await con.execute(`
-        SELECT id, diagnosis, description, health_category
+        SELECT id, created_at, diagnosis, description, health_category
         FROM medical_logs
         WHERE doctor_id = ${mysql.escape(req.body.doctor.id)} AND patient_id = ${req.body.patient_id}
   `);
