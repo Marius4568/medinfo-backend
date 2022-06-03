@@ -107,6 +107,7 @@ router.get('/get_logs', isLoggedIn, async (req, res) => {
   try {
     // Get the info of the doctor, who is logged in
     req.body.doctor = jwt.verify(req.headers.authorization.split(' ')[1], jwtSecret);
+    req.body.patient_id = req.query.patient_id;
 
     const con = await mysql.createConnection(mySQLconfig);
 
